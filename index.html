@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Lato&family=Raleway&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/3a17e8db5a.js" crossorigin="anonymous"></script>
+
+    <title>Gnome Game</title>
+</head>
+<body>
+
+<div id="wrapper">
+        
+
+    <div id="game-container">
+        <div id = "gameInfo">
+
+          
+
+            <div class = "gameOver">
+             <h2>Game Over</h2>
+             <p id="finalScore">Your final score is:</p>
+             <h4>Click anywhere to try again</h4>
+            </div>
+
+            <div class="gameMessage">
+                <h2>Welcome to Troll Hunter</h2>
+                <p> Object of the game is to hunt FIVE trolls by hitting them with a mushroom.<br>
+                    Hit a Troll +200 points <br> Miss a Troll -100 points </p>
+
+                <p class="directions">   <b> HOW TO MOVE THE PLAYER:</b>  <br>
+                    <i class="fas fa-arrow-alt-circle-up"></i>Up |
+                    <i class="fas fa-arrow-alt-circle-down"></i>Down |
+                    <i class="fas fa-arrow-alt-circle-left"></i>Slower |
+                    <i class="fas fa-arrow-alt-circle-right"></i>Faster
+                    <br>
+                    <span class="heavy">Spacebar </span> to Drop a Mushroom </p>
+                </p>
+                <h4>Click anywhere to Start the Game</h4>
+            </div> 
+
+              <div class="score">Score </div>
+        
+        </div>
+        <div class="game">    
+            <div class="gameArea">  </div>
+        </div> <!--end of game div-->
+
+        
+
+    </div> <!--end of container -->
+
+
+
+</div> <!--end of game wrapper-->
+
+    <script>
+
+         const score = document.querySelector(".score"); //get the score div
+         const gameArea = document.querySelector(".gameArea"); //get the game area div
+         const gameMessage = document.querySelector(".gameMessage"); //get Game Message (start) div
+         const gameOver = document.querySelector(".gameOver"); //this is the Game Over message
+         const trollImages= ['images/troll1.png','images/troll2.png','images/troll3.png' ];   // Create an array of Troll images...
+                
+        document.addEventListener("keydown", pressOn); //track when user presses key down anywhere on the screen/doc
+        document.addEventListener("keyup", pressOff); // track when user stops pressing key
+        document.addEventListener("click", start); //start the game here
+
+        //global object - player object
+        let player = {
+            score:0,
+            speed:2, //speed of player
+            inplay: false //checks if game is in play
+        };
+
+        //global key object. will reference as needed
+        let keys = {
+            space: false
+        }
+        
+       
+
+        
+        //game starts
+        function start(){   
+            gameMessage.classList.add("hide");
+            gameOver.classList.add("hide");
+            if(!player.inplay){ //This function stops multiple players to be added - note the ! to cancel the function when the player is in play
+                gameArea.innerHTML = "";
+                player.level = 5; //how many trolls to hit before game ends
+                makeTroll(); //function to create the troll  - the player disapears 
+                player.inplay = true; //take the object (player) and setting to true
+                player.gnome = document.createElement("div"); //create the playing object
+                player.score = 0; //default starting score
+                player.totalBombs = 6; //total bombs player has 
+                player.ready = true; //player is ready to drop another bomb //player.activeBomb = null; //default starting value of bombs...the numbers on the bombs
+                player.activeBomb = 0;
+                player.bombScore = 0;
+                player.gnome.setAttribute("class", "gnome"); //create the gnome class
+                gameArea.appendChild(player.gnome); //create element on page 
+                window.requestAnimationFrame(playGame); //from mdn
+                
+                // give numeric value of position of gnome
+                player.x = player.gnome.offsetLeft;
+                player.y = player.gnome.offsetTop;
+            } 
+        }
+
+        function endGame(){
+                    player.inplay = false;
+                    gameMessage.classList.add("hide");
+                    gameOver.classList.remove("hide");
+                    player.gnome.remove("add");
+                    gameOver.setAttribute ("class", "gameOver");
+                    document.getElementById("finalScore").innerHTML = "Your final score is: "  +player.score;
+                    score.style.display = "none";
+                   
+                    
+                }
+         
+
+
+        //this is the troll to destroy
+        function makeTroll(){
+            player.level--;
+                if(player.level < 0){
+                    endGame();
+                }else{
+                    player.troll = new Image();
+                    player.troll.src = trollImages[Math.floor(Math.random() * trollImages.length)];
+
+                    player.troll.alt = "troll";
+                    //player.troll = document.createElement("div");
+                    player.troll.setAttribute("class", "troll");
+                    player.troll.style.left = Math.floor(Math.random() * (gameArea.offsetWidth - 350)) + 100 + "px"; //location of troll
+                    gameArea.appendChild(player.troll); //adding to page
+                }
+        }
+        
+        //creates Mushroom 'bombs'
+
+        function makeBomb(){
+            if  (player.ready && (player.activeBomb < player.totalBombs)){  
+                player.score -= 100;
+                player.bombScore++;
+                player.activeBomb++;
+                let bomb = document.createElement("div");
+                bomb.setAttribute("class", "bomb");
+                bomb.y=player.y;
+                bomb.x=player.x; //aligns the bomb with player
+                bomb.style.left = bomb.x + "px";
+                bomb.style.top = bomb.y + "px";
+                gameArea.appendChild(bomb); //adds bomb to game
+                player.ready = false;
+                //creates time to release bombs
+                setTimeout(function(){
+                    player.ready = true;
+                },500);
+            }      
+        }
+
+
+        function moveBomb(){
+            let bombs = document.querySelectorAll(".bomb"); //select all elements with bomb class
+            bombs.forEach(function (item) {  //loop through all bombs in node list
+                item.y += 5; 
+                
+                item.style.top = item.y + "px";
+                //will remove from game area
+                if (item.y > 650) {
+                    player.activeBomb--; 
+                    item.parentElement.removeChild(item);
+                }
+
+                
+                if(isCollide(item,player.troll)){
+                    player.score+=300; //if you hit the troll, gain 300pts
+                    player.activeBomb--; //removes active bomb
+                    item.parentElement.removeChild(item); //removes bomb from screen area
+                    player.troll.src = 'images/boom.png'; //replaces troll with explosion image
+                    player.troll.alt = 'explosion';
+                    //delays explosion image and the appearance of new troll
+                    setTimeout(function()  {
+                        player.troll.parentElement.removeChild(player.troll); //removes troll
+                        makeTroll(); //creates new troll
+                    } ,500)
+                    
+                    }
+            })
+        }
+
+        function isCollide(a,b){
+                    let aRect = a.getBoundingClientRect();
+                    let bRect = b.getBoundingClientRect();
+                    return!(
+                        (aRect.bottom < bRect.top)||
+                        (aRect.top > bRect.bottom)||
+                        (aRect.right < bRect.left)||
+                        (aRect.left > bRect.right)
+                    )
+                }
+
+
+        //loop through and calculate out all the movement that needs to take place to move gnome around
+       function playGame() {
+            if(player.inplay){ //checks if game is inplay (if true)
+
+                moveBomb(); //move bombs
+                //if player presses space bar. Check if true
+                if(keys.space){
+                    makeBomb();
+                }
+                //console.log(player.x);
+
+                if(keys.ArrowUp && player.y > 80){ //if key is arrow up, move gnome up
+                    player.y -= player.speed;
+                }
+
+                if(keys.ArrowDown && player.y < 300){ 
+                    player.y += player.speed;
+                }
+
+                if(keys.ArrowLeft && player.x >0){
+                player.x -= player.speed;
+                }
+
+                if(keys.ArrowRight && player.x <
+                                    (gameArea.offsetWidth-80)){
+                player.x += player.speed; 
+                }
+
+                player.x += (player.speed *2);
+                if(player.x > gameArea.offsetWidth-150){
+                    player.x = 0;   
+                }
+
+                player.gnome.style.left = player.x + "px"; //moves the left position to value of x
+                player.gnome.style.top = player.y + "px"; //moves the top position to value of y
+                
+                window.requestAnimationFrame(playGame);
+                score.innerHTML = "Score: " + player.score; //displays scores and takes player.score and decreases it until 0
+            }
+        }
+
+        function pressOn(e){
+            e.preventDefault(); //removes default action associated with key pressed
+            let tempKey = (e.key == " ") ? "space" : e.key; 
+            keys[tempKey]=true; //accessing the object
+            //console.log(keys);
+        }
+
+        function pressOff(e) {//this is setting the above to false when key is false
+        
+            e.preventDefault(); 
+            let tempKey=(e.key == " ") ? "space" : e.key;
+            keys[tempKey]=false; 
+            //console.log(keys);
+        }
+    </script>
+
+
+
+<footer><p>Game created by: <a href="http://mtrask.bcitwebdeveloper.ca/" target="_blank">Megan Trask</a> 
+    and <a href="http://jescobellochoa.bcitwebdeveloper.ca/" target="_blank">Jenny Escobell</a> | TWD 26</p>
+        
+</footer>
+</body>
+</html>
+
